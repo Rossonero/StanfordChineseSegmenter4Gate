@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<!-- $Id$ -->
+<CREOLE-DIRECTORY>
+	<JAR SCAN="true">segmenter-1.0-SNAPSHOT.jar</JAR>
+	<JAR>lib/stanford-corenlp-3.5.2.jar</JAR>
+	<JAR>resources/stanford-chinese-corenlp-models.jar</JAR>
+	<!-- Processing Resources -->
+	<CREOLE>
+		<!-- creole.xml for the Chinese Segmenter PR -->
+		<RESOURCE>
+			<NAME>Stanford Chinese Segmenter</NAME>
+			<COMMENT>Stanford Chinese Segmenter.</COMMENT>
+			<CLASS>gate.creole.segmenter.ChineseSegmenter</CLASS>
+		</RESOURCE>			  
+	</CREOLE>
+</CREOLE-DIRECTORY>
