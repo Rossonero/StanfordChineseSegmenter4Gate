@@ -26,7 +26,7 @@ import java.util.Properties;
 
 import static edu.stanford.nlp.ling.CoreAnnotations.*;
 
-@CreoleResource(name = "Stanford Chinese Segmenter", comment = "Stanford Chinese Segmenter.", icon = "segmenter")
+@CreoleResource(name = "Stanford Chinese Segmenter", comment = "Stanford Chinese Segmenter.", icon = "shefTokeniser")
 public class ChineseSegmenter extends AbstractLanguageAnalyser {
 
 
@@ -49,7 +49,6 @@ public class ChineseSegmenter extends AbstractLanguageAnalyser {
 
     @Override
     public Resource init() throws ResourceInstantiationException {
-        System.out.println("33");
         return this;
     }
 
@@ -61,7 +60,6 @@ public class ChineseSegmenter extends AbstractLanguageAnalyser {
     @Override
     public void execute() throws ExecutionException {
         try {
-            System.out.println("44");
             if (document == null)
                 throw new ExecutionException("No document to process!");
 
@@ -73,17 +71,15 @@ public class ChineseSegmenter extends AbstractLanguageAnalyser {
             fireProgressChanged(0);
 
             Properties props = new Properties();
-            props.setProperty("annotators", "segment");
+            props.setProperty("annotators", "segment ssplit");
             props.setProperty("customAnnotatorClass.segment", "edu.stanford.nlp.pipeline.ChineseSegmenterAnnotator");
             props.setProperty("segment.model", modelFile.toString().substring(5));
             props.setProperty("segment.sighanCorporaDict", dictDir.toString().substring(5));
             props.setProperty("segment.serDictionary", dictFile.toString().substring(5));
             props.setProperty("segment.sighanPostProcessing", "true");
+            props.setProperty("ssplit.boundaryTokenRegex", "[.]|[!?]+|[。]|[！？]+");
             StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
             String content = document.getContent().getContent(new Long(0), document.getContent().size()).toString();
-            System.out.println("-----------");
-            System.out.println(content);
-            System.out.println("-----------");
             Annotation doc = new Annotation(content);
             pipeline.annotate(doc);
 
@@ -103,7 +99,6 @@ public class ChineseSegmenter extends AbstractLanguageAnalyser {
                 // add the token annotation
                 try {
                     tokenMap.put(TOKEN_STRING_FEATURE, word);
-                    System.out.println(word + " s: " + tokenStart + " e: " + tokenEnd + " " + tokenMap);
                     outputAS.add(tokenStart, tokenEnd, tokenLabel, tokenMap);
                 } catch (InvalidOffsetException e) {
                     System.out.println("Token alignment problem:" + e);
