@@ -30,7 +30,14 @@ public class Main {
 
     public static void main(String[] args) {
 
-        String text =
+        String text = "应聘职位\n" +
+                "技术总监（上海-卢湾区）\n" +
+                "应聘公司\n" +
+                "上海锦江国际电子商务有限公司\n" +
+                "投递时间\n" +
+                "2014-08-12\n" +
+                "简历匹配度\n" +
+                "100%\n" +
                 "简历\n" +
                 "简历关键字\n" +
                 "总监/经理\n" +
@@ -264,13 +271,14 @@ public class Main {
         pipeline.annotate(document);
 
         withSents(document);
-        System.out.println("---------------");
+        System.out.println("-------------------------------");
         withoutSents(document);
     }
 
     private static void withSents(Annotation document) {
         List<CoreMap> sentences = document.get(SentencesAnnotation.class);
         for (CoreMap sentence : sentences) {
+            System.out.println(sentence.get(TextAnnotation.class));
             for (CoreLabel token : sentence.get(TokensAnnotation.class)) {
                 String word = token.get(TextAnnotation.class);
                 long startStart = token.get(CharacterOffsetBeginAnnotation.class);
@@ -278,7 +286,7 @@ public class Main {
                 String pos = token.get(PartOfSpeechAnnotation.class);
                 String ne = token.get(NamedEntityTagAnnotation.class);
 
-                System.out.println(word + "/" + pos + "/" + ne);
+//                System.out.println(word + "/" + pos + "/" + ne);
             }
         }
     }
