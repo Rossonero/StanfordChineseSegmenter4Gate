@@ -75,9 +75,9 @@ public class ChineseSegmenter extends AbstractLanguageAnalyser {
             Properties props = new Properties();
             props.setProperty("annotators", "segment ssplit");
             props.setProperty("customAnnotatorClass.segment", "edu.stanford.nlp.pipeline.ChineseSegmenterAnnotator");
-            props.setProperty("segment.model", "edu/stanford/nlp/models/segmenter/chinese/ctb.gz");
-            props.setProperty("segment.sighanCorporaDict", "edu/stanford/nlp/models/segmenter/chinese");
-            props.setProperty("segment.serDictionary", "edu/stanford/nlp/models/segmenter/chinese/dict-chris6.ser.gz");
+            props.setProperty("segment.model", modelFile.toString().substring(5));
+            props.setProperty("segment.sighanCorporaDict", dictDir.toString().substring(5));
+            props.setProperty("segment.serDictionary", dictFile.toString().substring(5));
             props.setProperty("segment.sighanPostProcessing", "true");
             props.setProperty("ssplit.boundaryTokenRegex", "[.]|[!?]+|[。]|[！？]+");
             StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
