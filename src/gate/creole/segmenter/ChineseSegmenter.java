@@ -47,6 +47,8 @@ public class ChineseSegmenter extends AbstractLanguageAnalyser {
 
     public static final String Split_LABEL = "splitLabel";
 
+    public static final String Sentence_LABEL = "sentenceLabel";
+
     public static final String TOKEN_STRING_FEATURE = "string";
 
     public ChineseSegmenter() {
@@ -76,16 +78,22 @@ public class ChineseSegmenter extends AbstractLanguageAnalyser {
             fireProgressChanged(0);
 
             Properties props = new Properties();
-            props.setProperty("annotators", "segment");
+            props.setProperty("annotators", "segment ssplit");
             props.setProperty("customAnnotatorClass.segment", "edu.stanford.nlp.pipeline.ChineseSegmenterAnnotator");
             props.setProperty("segment.model", modelFile.toString().substring(5));
             props.setProperty("segment.sighanCorporaDict", dictDir.toString().substring(5));
             props.setProperty("segment.serDictionary", dictFile.toString().substring(5));
             props.setProperty("segment.sighanPostProcessing", "true");
             props.setProperty("segment.verbose", "false");
-//            props.setProperty("ssplit.boundaryTokenRegex", "[.]|[!?]+|[。]|[！？]+");
+            props.setProperty("ssplit.boundaryTokenRegex", "[.]|[!?]+|[。]|[！？]+");
+            props.setProperty("ssplit.newlineIsSentenceBreak", "always");
             StanfordCoreNLP pipeline = new StanfordCoreNLP(props);
-            String content = document.getContent().getContent(new Long(0), document.getContent().size()).toString();
+            String content = "";
+            try {
+                content = document.getContent().getContent(new Long(0), document.getContent().size()).toString();
+            } catch (Exception e) {
+                System.out.println("Document content offsets wrong: " + e);
+            }
 
 //            String[] paragrams = getParagrams(content);
 //            int paragramcount = paragrams.length;
@@ -105,33 +113,43 @@ public class ChineseSegmenter extends AbstractLanguageAnalyser {
             Long tokenEnd;
             Long prevTokenEnd = new Long(0);
 
-            List<CoreLabel> tokens = doc.get(TokensAnnotation.class);
+            List<CoreMap> sentences = doc.get(SentencesAnnotation.class);
+            for (CoreMap sentence : sentences) {
+                SimpleFeatureMapImpl sentMap = new SimpleFeatureMapImpl();
+                Long sentStart = new Long(sentence.get(CharacterOffsetBeginAnnotation.class));
+                Long sentEnd = new Long(sentence.get(CharacterOffsetEndAnnotation.class));
 
-            for (CoreLabel token : tokens) {
-                String word = token.get(TextAnnotation.class);
-                tokenStart = new Long(token.get(CharacterOffsetBeginAnnotation.class));
-                tokenEnd = new Long(token.get(CharacterOffsetEndAnnotation.class));
-
-                SimpleFeatureMapImpl tokenMap = new SimpleFeatureMapImpl();
-
-                // add the token annotation
                 try {
-                    tokenMap.put(TOKEN_STRING_FEATURE, word);
-                    outputAS.add(tokenStart, tokenEnd, tokenLabel, tokenMap);
+                    outputAS.add(sentStart, sentEnd, sentenceLabel, sentMap);
                 } catch (InvalidOffsetException e) {
                     System.out.println("Token alignment problem:" + e);
                 }
+                for (CoreLabel token : sentence.get(TokensAnnotation.class)) {
+                    String word = token.get(TextAnnotation.class);
+                    tokenStart = new Long(token.get(CharacterOffsetBeginAnnotation.class));
+                    tokenEnd = new Long(token.get(CharacterOffsetEndAnnotation.class));
 
-                // do we need to add a space annotation?
-                if (tokenStart > prevTokenEnd) {
+                    SimpleFeatureMapImpl tokenMap = new SimpleFeatureMapImpl();
+
+                    // add the token annotation
                     try {
-                        outputAS.add(prevTokenEnd, tokenStart, spaceLabel, new SimpleFeatureMapImpl());
+                        tokenMap.put(TOKEN_STRING_FEATURE, word);
+                        outputAS.add(tokenStart, tokenEnd, tokenLabel, tokenMap);
                     } catch (InvalidOffsetException e) {
-                        System.out.println("Space token alignment problem:" + e);
+                        System.out.println("Token alignment problem:" + e);
                     }
-                }
 
-                prevTokenEnd = tokenEnd;
+                    // do we need to add a space annotation?
+                    if (tokenStart > prevTokenEnd) {
+                        try {
+                            outputAS.add(prevTokenEnd, tokenStart, spaceLabel, new SimpleFeatureMapImpl());
+                        } catch (InvalidOffsetException e) {
+                            System.out.println("Space token alignment problem:" + e);
+                        }
+                    }
+
+                    prevTokenEnd = tokenEnd;
+                }
             }
 
             fireProcessFinished();
@@ -272,7 +290,18 @@ public class ChineseSegmenter extends AbstractLanguageAnalyser {
         return this.dictDir;
     }
 
-//    @Optional
+    @Optional
+    @RunTime
+    @CreoleParameter(comment = "Annotation type for sentences", defaultValue = "Sentence")
+    public void setSentenceLabel(String sentenceLabel) {
+        this.sentenceLabel = sentenceLabel;
+    }
+
+    public String getSentenceLabel() {
+        return this.sentenceLabel;
+    }
+//
+//   @Optional
 //    @RunTime
 //    @CreoleParameter(comment = "Annotation type for spaces", defaultValue = "Split")
 //    public void setSplitLabel(String splitLabel) {
@@ -292,6 +321,8 @@ public class ChineseSegmenter extends AbstractLanguageAnalyser {
     private String tokenLabel;
 
     private String spaceLabel;
+
+    private String sentenceLabel;
 
 //    private String splitLabel;
 
